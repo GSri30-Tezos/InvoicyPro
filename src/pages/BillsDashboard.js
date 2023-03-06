@@ -35,8 +35,9 @@ class BillsDashboard extends React.Component {
     }
 
     async getBills() {
+        await this.fetchAccount();
         try{
-            const ids = await getAllBillsByCompany(this.companyId);
+            const ids = await getAllBillsByCompany(this.state.companyId);
             ids.forEach(async id => {
                 const data = await getInvoiceDetails(id);
                 const invoice = {'id': id, 'data': data}
@@ -45,7 +46,9 @@ class BillsDashboard extends React.Component {
                 });
             })
         }
-        catch {}
+        catch(e) {
+            console.log(e);
+        }
     }
 
     componentDidMount() {
@@ -53,7 +56,7 @@ class BillsDashboard extends React.Component {
     }  
 
     async payInvoice(invoice) {
-        console.log(invoice)
+        // console.log(invoice)
         const invoiceId = invoice.id;
         const advance =  parseInt(invoice.data.payment.advancePercent);
         const workCompleted = invoice.data.workCompleted;
