@@ -6,7 +6,9 @@ window.$ = $;
 global.jQuery = $;
 
 const DashboardDefault = React.lazy(() => import('./pages/Dashboard'));
-
+const BillsDashboardDefault = React.lazy(() => import('./pages/BillsDashboard'));
+const AddClient = React.lazy(() => import('./pages/AddClient'));
+const InvoicePage = React.lazy(() => import('./components/InvoicePage'))
 const UIBasicButton = React.lazy(() => import('./Demo/UIElements/Basic/Button'));
 const UIBasicBadges = React.lazy(() => import('./Demo/UIElements/Basic/Badges'));
 const UIBasicBreadcrumbPagination = React.lazy(() => import('./Demo/UIElements/Basic/BreadcrumbPagination'));
@@ -27,7 +29,11 @@ const OtherSamplePage = React.lazy(() => import('./Demo/Other/SamplePage'));
 const OtherDocs = React.lazy(() => import('./Demo/Other/Docs'));
 
 const routes = [
-    { path: '/dashboard/', exact: true, name: 'Default', component: DashboardDefault },
+    { path: '/dashboard/', exact: true, name: 'Dashboard', component: DashboardDefault },
+    { path: '/invoice/', exact: true, name: 'Invoice', component: InvoicePage },
+    { path: '/bills-dashboard/', exact: true, name: 'Bills', component: BillsDashboardDefault },
+    { path: '/add-client/', exact: true, name: 'Add Client', component: AddClient },
+    
     { path: '/basic/button', exact: true, name: 'Basic Button', component: UIBasicButton },
     { path: '/basic/badges', exact: true, name: 'Basic Badges', component: UIBasicBadges },
     { path: '/basic/breadcrumb-paging', exact: true, name: 'Basic Breadcrumb Pagination', component: UIBasicBreadcrumbPagination },
