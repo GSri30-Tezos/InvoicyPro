@@ -126,6 +126,33 @@ export const getClientbyId = async (companyId, clientId) => {
   return client;
 };
 
+export const updateClientDiscount = async (companyId, clientId, discount) => {
+  const accounts = await web3.eth.getAccounts();
+  const account = accounts[0];
+  const result = await InvoiceManagement_Contract.methods
+    .updateClientDiscount(companyId, clientId, discount)
+    .send({
+      from: account,
+    });
+
+  if (result) return true;
+  else return false;
+};
+
+export const updateClientBlockedStatus = async (companyId, clientId) => {
+  const accounts = await web3.eth.getAccounts();
+  const account = accounts[0];
+  const result = await InvoiceManagement_Contract.methods
+    .updateClientBlockedStatus(companyId, clientId)
+    .send({
+      from: account,
+    });
+
+  if (result) return true;
+  else return false;
+};
+
+
 //#################################################################
 //# Invoice
 //#################################################################
@@ -201,4 +228,18 @@ export const getAllInvoicesByClient = async (companyId, clientId) => {
     .getAllInvoicesByClient(companyId, clientId)
     .call();
   return invoiceIds;
+};
+
+
+export const updateInvoiceWorkCompletedStatus = async (invoiceId) => {
+  const accounts = await web3.eth.getAccounts();
+  const account = accounts[0];
+  const result = await InvoiceManagement_Contract.methods
+    .updateInvoiceWorkCompleted(invoiceId)
+    .send({
+      from: account,
+    });
+
+  if (result) return true;
+  else return false;
 };
