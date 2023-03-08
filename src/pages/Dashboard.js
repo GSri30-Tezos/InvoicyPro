@@ -1,18 +1,18 @@
 import React from 'react';
-import {Row, Col, Card, Table, Tabs, Tab, Button} from 'react-bootstrap';
+import {Row, Col, Card, Table} from 'react-bootstrap';
 
 import Aux from "../hoc/_Aux";
 import DEMO from "../store/constant";
 
 import avatar1 from '../assets/images/user/avatar-1.jpg';
 import avatar2 from '../assets/images/user/avatar-2.jpg';
-import avatar3 from '../assets/images/user/avatar-3.jpg';
-import invoiceData from './invoices.json'
 
-import {web3} from '../services/web3';
-import {loadWeb3, loadAccount, getCompanyId} from "../services/web3";
+import {loadWeb3, loadAccount, getCompanyId, getInvoiceDetails,
+        web3, getAllClients, getCompanyById, getAllInvoicesByClient} from "../services/web3";
 
 import NVD3Chart from 'react-nvd3';
+import Dialog from 'react-bootstrap-dialog';
+
 
 const pieChartData = [
     {key: "Type1", y: 33, color: "#1de9b6"},
@@ -48,151 +48,6 @@ function lineChart() {
     ];
 }
 
-const _clients = 
-[
-    {
-        "id":"0",
-        "data": {
-            "clientId" : 0,
-            "clientAddr" : "0x123456789",
-            "isBlocked" : false,
-            "discount" : 97,
-            "numInvoices" : 10
-        }
-    },
-    {
-        "id":"1",
-        "data": {
-            "clientId" : 1,
-            "clientAddr" : "0x987654321",
-            "isBlocked" : false,
-            "discount" : 97,
-            "numInvoices" : 10
-        }
-    },
-    {
-        "id":"2",
-        "data": {
-            "clientId" : 2,
-            "clientAddr" : "0x1234598765",
-            "isBlocked" : false,
-            "discount" : 97,
-            "numInvoices" : 10
-        }
-    }
-];
-
-const _topPendingInvoices =
-[
-    {
-        "id":"0",
-        "data": {
-            "company": {
-                "name": "ClientX",
-                "email": "xyz@gnail.com",
-                "companyId": 1,
-                "companyAddr": "0x5cB2dB3A9c7C073D619C637dfD99dE2cf2C51037"
-            },
-            "invoiceId": 0,
-            "companyId": 1,
-            "clientId": 0,
-            "items" : [ 
-                {
-                    "desc": "",
-                    "qty":1,
-                    "price":1,
-                    "discount":1,
-                    "tax":1
-                }
-            ],
-            "payment": {    
-                "method": "", 
-                "network": "",
-                "totalAmount":1000,
-                "dueAmount":1,
-                "advancePercent":1 
-            },
-            "workCompleted": false,
-            "isSettled": false,
-            "invoiceDate": "09-01-22",
-            "dueDate": "09-02-22",
-            "uploadDocURI": "", 
-            "note": "Important"
-        }
-    },
-    {
-        "id":"1",
-        "data": {
-            "company": {
-                "name": "ClientX",
-                "email": "xyz@gnail.com",
-                "companyId": 1,
-                "companyAddr": "0x5cB2dB3A9c7C073D619C637dfD99dE2cf2C51037"
-            },
-            "invoiceId": 1,
-            "companyId": 1,
-            "clientId": 0,
-            "items" : [ 
-                {
-                    "desc": "",
-                    "qty":1,
-                    "price":1,
-                    "discount":1,
-                    "tax":1
-                }
-            ],
-            "payment": {    
-                "method": "", 
-                "network": "",
-                "totalAmount":1500,
-                "dueAmount":1,
-                "advancePercent":1 
-            },
-            "workCompleted": false,
-            "isSettled": false,
-            "invoiceDate": "09-01-22",
-            "dueDate": "25-02-22",
-            "uploadDocURI": "", 
-            "note": "Important"
-        }
-    },
-    {
-        "id":"2",
-        "data": {
-            "company": {
-                "name": "ClientX",
-                "email": "xyz@gnail.com",
-                "companyId": 1,
-                "companyAddr": "0x5cB2dB3A9c7C073D619C637dfD99dE2cf2C51037"
-            },
-            "invoiceId": 2,
-            "companyId": 1,
-            "clientId": 0,
-            "items" : [ 
-                {
-                    "desc": "",
-                    "qty":1,
-                    "price":1,
-                    "discount":1,
-                    "tax":1
-                }
-            ],
-            "payment": {    
-                "method": "", 
-                "network": "",
-                "totalAmount":2000,
-                "dueAmount":1,
-                "advancePercent":1 
-            },
-            "workCompleted": false,
-            "isSettled": true,
-            "invoiceDate": "09-01-22",
-            "dueDate": "15-03-22",
-            "uploadDocURI": "", 
-            "note": "Important"
-        }
-    }
-]
 
 class Dashboard extends React.Component {
 
@@ -217,10 +72,39 @@ class Dashboard extends React.Component {
 
     /*Set both clients and topInvoices state vars*/
     async getClients(){
+        await this.fetchAccount();
+        const currentCompanyId = this.state.companyId;
         try{
-            await this.fetchAccount();
-            ; 
-        }catch(e){
+            const clients = await getAllClients();
+            clients.forEach(async client => {
+                const companyId = await getCompanyId(client.clientAddr);
+                const company = await getCompanyById(companyId);
+
+                const ids = await getAllInvoicesByClient(currentCompanyId, client.clientId);
+                ids.forEach(async id => {
+                    const data = await getInvoiceDetails(id);
+                    const invoice = {'id': id, 'data': data}
+                    this.setState({
+                        topInvoices:[...this.state.topInvoices, invoice]
+                    });
+                })
+
+                const data = {
+                    "clientId" : client.clientId,
+                    "clientAddr" : client.clientAddr,
+                    "isBlocked" : client.isBlocked,
+                    "discount" : client.discount,
+                    "name" : company.name,
+                    "numInvoices": ids.length,
+                }
+                const newClient = {'id': client.clientId, 'data': data}
+                this.setState({
+                    clients: [...this.state.clients, newClient]
+                });
+    
+            })
+
+        } catch(e){
             console.log(e);
         }
     }
@@ -229,20 +113,35 @@ class Dashboard extends React.Component {
         this.getClients();
     }  
 
+    compareFilterTopInvoices(a, b){
+        if(a.data.payment.dueAmount < b.data.payment.dueAmount) return 1;
+        if(a.data.payment.dueAmount > b.data.payment.dueAmount) return -1;
+        return 0;
+    }
+
+    // Sorts in desc order based on dueAmount. Returns only top 5 results
+    filterTopInvoices(){
+        let invoices = this.state.topInvoices;
+        invoices.sort(this.compareFilterTopInvoices);
+        return invoices.slice(0,5);
+    }
+
     render() {       
         let topPendingInvoices = [];
         let clients = [];
         let totalInvoices = 100;
         let totalPendingInvoices = 56;
         let totalClients = 30;
+        
+        let invoices = this.filterTopInvoices();
 
-        _topPendingInvoices.forEach(invoice => {
+        invoices.forEach(invoice => {
             topPendingInvoices.push(
                 <tr className="unread" key = {invoice.id}>
                     <td><img className="rounded-circle" style={{width: '40px'}} src={avatar1} alt="activity-user"/></td>
                     <td>
                         <h6 className="mb-1">{invoice.data.company.name}</h6>
-                        {/* <p className="m-0">{invoice.data.note}</p> */}
+                        <p className="m-0">{invoice.data.company.email}</p>
                     </td>
                     <td>
                         <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15"/>{invoice.data.invoiceDate}</h6>
@@ -252,23 +151,24 @@ class Dashboard extends React.Component {
                     </td>
 
                     <td>
-                        <h6 className="text-muted">10 ETH</h6>
+                        <h6 className="text-muted">{web3.utils.fromWei(invoice.data.payment.dueAmount)} ETH due</h6>
                     </td>
                     <td>
                         <a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12">View Details</a>
-                        <button style={{border: 0}} onClick={() => {alert("Reminder sent!")}} className="label theme-bg text-white f-12">Remind</button>
+                        <button style={{border: 0}} onClick={() => {this.dialog.showAlert("Reminder sent!")}} className="label theme-bg text-white f-12">Remind</button>
+                        <Dialog ref={(component) => { this.dialog = component }} />
                     </td>
                 </tr>
-            )
+            );
         })
 
-        _clients.forEach(client => {
+        this.state.clients.forEach(client => {
             clients.push(
                 <tr className="unread" key = {client.id}>
                     <td><img className="rounded-circle" style={{width: '40px'}} src={avatar2} alt="activity-user"/></td>
                     <td>
                         <h6 className="mb-1">{client.data.clientAddr}</h6>
-                        <p className="m-0">Name</p>
+                        <p className="m-0">{client.data.name}</p>
                     </td>
                     <td>
                         <h6 className="text-muted">{client.data.numInvoices} Invoices</h6>
@@ -366,7 +266,7 @@ class Dashboard extends React.Component {
                     <Col md={12} xl={12}>
                         <Card className='Recent-Users'>
                             <Card.Header>
-                                <Card.Title as='h5'>Top Pending Invoices</Card.Title>
+                                <Card.Title as='h5'>Most Important Invoices</Card.Title>
                             </Card.Header>
                             <Card.Body className='px-0 py-2'>
                             <Table responsive hover>
@@ -400,3 +300,19 @@ class Dashboard extends React.Component {
 }
 
 export default Dashboard;
+
+// For reference
+// const _clients = 
+// [
+//     {
+//         "id":"0",
+//         "data": {
+//             "clientId" : 0,
+//             "clientAddr" : "0x123456789",
+//             "isBlocked" : false,
+//             "discount" : 97,
+//             "numInvoices" : 10,
+//             "name": "Comapny Genius"
+//         }
+//     }
+// ];

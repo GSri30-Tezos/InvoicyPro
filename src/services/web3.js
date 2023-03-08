@@ -49,14 +49,14 @@ export const createCompany = async (name, email) => {
   else return false;
 };
 
-export const getCompanyId = async () => {
-  const accounts = await web3.eth.getAccounts();
-  const account = accounts[0];
+export const getCompanyId = async (address) => {
+  if(address === undefined) {  // Optional parameter
+    const accounts = await web3.eth.getAccounts();
+    address = accounts[0];
+  }
   const companyId = await InvoiceManagement_Contract.methods
-    .getCompanyId(account)
+    .getCompanyId(address)
     .call();
-
-  // console.log(companyId);
   return companyId;
 };
 
@@ -69,6 +69,26 @@ export const getCompanyById = async (companyId) => {
 };
 
 
+export const getAllCompanies = async () => {
+  const data = await InvoiceManagement_Contract.methods
+    .getAllCompanies()
+    .call();
+
+  const companies = []
+  for(var i = 0; i < data[0].length; i++) {
+    const company = {
+      'companyId': data[0][i],
+      'name': data[1][i],
+      'email': data[2][i],
+      'companyAddr': data[3][i],
+    }
+    companies.push(company);
+  }
+  console.log(companies);
+  return companies;
+};
+
+
 //#################################################################
 //# Client
 //#################################################################
@@ -76,12 +96,8 @@ export const getCompanyById = async (companyId) => {
 export const addClient = async (clientAddr, discount) => {
   const accounts = await web3.eth.getAccounts();
   const account = accounts[0];
-  const isValidAddr = web3.utils.isAddress(clientAddr)
-  if(!isValidAddr) {
-    return false;
-  }
   const result = await InvoiceManagement_Contract.methods
-    .addClient(clientAddr)
+    .addClient(clientAddr, discount)
     .send({
       from: account,
     });
@@ -99,8 +115,15 @@ export const getAllClients = async () => {
     .call({
       from: account,
     });
-  console.log(clients); // Check this
   return clients;
+};
+
+
+export const getClientbyId = async (companyId, clientId) => {
+  const client = await InvoiceManagement_Contract.methods
+    .companyToClients(companyId, clientId)
+    .call();
+  return client;
 };
 
 //#################################################################
@@ -171,4 +194,11 @@ export const payBill = async (invoiceId, amount) => {
 
   window.location.reload();
   console.log(result);
+};
+
+export const getAllInvoicesByClient = async (companyId, clientId) => {
+  const invoiceIds = await InvoiceManagement_Contract.methods
+    .getAllInvoicesByClient(companyId, clientId)
+    .call();
+  return invoiceIds;
 };

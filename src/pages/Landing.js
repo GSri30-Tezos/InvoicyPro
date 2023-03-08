@@ -5,6 +5,8 @@ import '../assets/scss/style.scss';
 import Aux from "../hoc/_Aux";
 import Breadcrumb from "../App/layout/AdminLayout/Breadcrumb";
 import {loadWeb3, loadAccount, getCompanyId} from "../services/web3";
+//https://www.npmjs.com/package/react-bootstrap-dialog
+import Dialog from 'react-bootstrap-dialog';
 
 class Landing extends React.Component {
 
@@ -26,7 +28,7 @@ class Landing extends React.Component {
             })
         }
         else {
-            window.alert('Please register your company first or connnect with other wallet address.');
+            this.dialog.showAlert('Please register your company first or connnect with other wallet address.');
         }
     }
     render () {
@@ -46,9 +48,11 @@ class Landing extends React.Component {
                                 <div className="mb-4">
                                     <i className="feather icon-clipboard auth-icon"/>
                                 </div>
-                                <h3 className="mb-4">Welcome to Invoice Management System</h3>
+                                <h3 className="mb-4">Welcome to Invoicsy</h3>
+                                <p className="mb-4">Invoice management systemized!</p>
                                 <Link to="/signup" className="btn btn-primary shadow-2 mb-4">Sign up</Link>
                                 <button className="btn btn-primary shadow-2 mb-4" onClick={this.loginHandler.bind(this)}>Login</button>
+                                <Dialog ref={(component) => { this.dialog = component }} />
                             </div>
                         </div>
                     </div>

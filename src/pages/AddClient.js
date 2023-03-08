@@ -1,16 +1,21 @@
 import React from 'react';
-import {Row, Col, Button, InputGroup, FormControl} from 'react-bootstrap';
+import {Row, Col, Card, Form, Table, Button, InputGroup, FormControl} from 'react-bootstrap';
 
 import Aux from "../hoc/_Aux";
 
-import {web3, addClient} from '../services/web3';
-import {loadWeb3, loadAccount, getCompanyId} from "../services/web3";
+import {loadWeb3, loadAccount, getCompanyId, web3, addClient, getAllCompanies} from "../services/web3";
+
+import avatar2 from '../assets/images/user/avatar-2.jpg';
+
+import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
+import RangeSlider from 'react-bootstrap-range-slider';
+import Dialog from 'react-bootstrap-dialog';
 
 class BillsDashboard extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = {wallet: '', companyId: 0, clientAddr: '', discount: 0};
+        this.state = {wallet: '', companyId: 0, clientAddr: '', discount: 20, clients: []};
         this.fetchAccount();
     }
 
@@ -33,21 +38,61 @@ class BillsDashboard extends React.Component {
         const discount = this.state.discount;
         const isValidAddr = web3.utils.isAddress(clientAddr)
         if(!isValidAddr) {
-            alert(`Client ${clientAddr} is an invalid address`);
+            this.dialog.showAlert(`Client '${clientAddr}' is an invalid address`);
             return;
         }
         const result = await addClient(clientAddr, discount);
         if (result) {
-            alert(`Client ${clientAddr} added successfully`);
+            this.dialog.showAlert(`Client '${clientAddr}' added successfully!`);
             this.props.history.push('/dashboard');
         }
         else {
-            alert(`Something went wrong!`);
+            this.addClient.showAlert(`Something went wrong!`);
         }
     }
 
+    async getClients(){
+        await this.fetchAccount();
+        try{
+            const companies = await getAllCompanies();
+            companies.forEach(company => {
+                const client = {'id': company.companyId, 'data': company}
+                this.setState({
+                    clients: [...this.state.clients, client]
+                });
+            })
+
+        } catch(e){
+            console.log(e);
+        }
+    }
+
+    componentDidMount() {
+        this.getClients();
+    }  
+
     render() {
-        
+        let suggestedClients = [];
+
+        this.state.clients.forEach(client => {
+            suggestedClients.push(
+                <tr className="unread" key = {client.id}>
+                    <td><img className="rounded-circle" style={{width: '40px'}} src={avatar2} alt="activity-user"/></td>
+                    <td>
+                        <h6 className="mb-1">{client.data.companyAddr}</h6>
+                    </td>
+                    <td>
+                        <p className="m-0">{client.data.name}</p>
+                        <p className="m-0">{client.data.email}</p>
+                    </td>
+                    {/* <td>
+                        <h6 className="text-muted">{client.data.numInvoices} Invoices</h6>
+                    </td> */}
+                    {/* <td><a href={'/clients/'+client.data.clientId} className="label theme-bg text-white f-12">View Details</a></td> */}
+                </tr>
+            );
+        });
+
         return (
             <Aux>
                 <Row>
@@ -64,21 +109,31 @@ class BillsDashboard extends React.Component {
                             onChange={e => this.setState({clientAddr: e.target.value})}
                         />
                     </InputGroup>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            placeholder="Disount for the client in Percentage (0 - 100)"
-                            aria-label="Disount for the client in Percentage (0 - 100)"
-                            aria-describedby="basic-addon2"
-                            onChange={e => this.setState({discount: e.target.value})}
-                        />
-                    </InputGroup>
+                    
+                    <Form.Label htmlFor="customRange1">Discount for the client</Form.Label>
+                        <RangeSlider value={this.state.discount} onChange={e=>this.setState({discount: e.target.value})}/>
+                
                     <InputGroup.Append>
                         <Button onClick={() => this.addClient()}>Add</Button>
+                        <Dialog ref={(component) => { this.dialog = component }} />
                     </InputGroup.Append>
                     </div>
                     }
                     </Col>
-                    <Col md={3}>
+                    
+                    <Col md={12} xl={12} className='mt-5'>
+                        <Card className='Recent-Users'>
+                            <Card.Header>
+                                <Card.Title as='h5'>Suggested Clients</Card.Title>
+                            </Card.Header>
+                            <Card.Body className='px-0 py-2'>
+                            <Table responsive hover>
+                            <tbody>
+                                {suggestedClients}
+                            </tbody>
+                            </Table>
+                            </Card.Body>
+                        </Card>
                     </Col>
                 </Row>
             </Aux>
