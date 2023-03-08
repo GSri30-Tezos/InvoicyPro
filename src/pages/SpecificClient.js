@@ -2,27 +2,13 @@ import React from 'react';
 import {Row, Col, Card, Table, Button} from 'react-bootstrap';
 
 import Aux from "../hoc/_Aux";
-import DEMO from "../store/constant";
 
-import avatar1 from '../assets/images/user/avatar-1.jpg';
 import avatar2 from '../assets/images/user/avatar-2.jpg';
 
 import {web3, loadWeb3, loadAccount, getCompanyId, getCompanyById, updateClientBlockedStatus, updateInvoiceWorkCompletedStatus,
     getAllInvoicesByClient, getInvoiceDetails, getClientbyId, updateClientDiscount} from "../services/web3";
 import Dialog from 'react-bootstrap-dialog';
 import RangeSlider from 'react-bootstrap-range-slider';
-
-// For Reference
-    // client = {
-    // clientAddr: "0xA4DD021Df55c4b746cf6Be71b9b639f8A3099F39"
-    // clientId: "0"
-    // companyAddr: "0xA4DD021Df55c4b746cf6Be71b9b639f8A3099F39"
-    // companyId: "2"
-    // discount: "35"
-    // email: "adidas@gmail.com"
-    // isBlocked: false
-    // name: "Adidas"
-    // }
 
 
 class ClientDashboard extends React.Component {
@@ -112,7 +98,6 @@ class ClientDashboard extends React.Component {
         }
     }
 
-    
     async updateWorkStatus(invoiceId) {
         const result = await updateInvoiceWorkCompletedStatus(invoiceId);
         if(result) {
@@ -122,6 +107,13 @@ class ClientDashboard extends React.Component {
         else {
             this.dialog.showAlert('Something went wrong!');
         }
+    }
+
+    viewDetails(invoice) {
+        this.props.history.push({
+            pathname: '/view-invoice/',
+            state: { invoice: invoice }
+        })
     }
 
     render() {       
@@ -134,8 +126,8 @@ class ClientDashboard extends React.Component {
                     <tr className="unread" key = {invoice.id}>
                         <td><img className="rounded-circle" style={{width: '40px'}} src={avatar2} alt="activity-user"/></td>
                         <td>
-                            <h6 className="mb-1">{invoice.data.company.name}</h6>
-                            {/* <p className="m-0">{invoice.data.note}</p> */}
+                            <h6 className="mb-1">{invoice.data.client.name}</h6>
+                            <p className="m-0">{invoice.data.client.email}</p>
                         </td>
                         <td>
                             <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15"/>{invoice.data.invoiceDate}</h6>
@@ -144,7 +136,7 @@ class ClientDashboard extends React.Component {
                             <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15"/>{invoice.data.dueDate}</h6>
                         </td>    
                         <td>
-                            <h6 className="text-muted">{web3.utils.fromWei(invoice.data.payment.totalAmount)} ETH</h6>
+                            <h6 className="text-muted">{parseFloat(web3.utils.fromWei(invoice.data.payment.totalAmount)).toFixed(2)} ETH</h6>
                         </td>
                         <td>
                             <h6 className="text-muted">Work Status: &nbsp; 
@@ -159,7 +151,7 @@ class ClientDashboard extends React.Component {
                             </h6>
                         </td>
                         <td>
-                        <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12">View Details</a>
+                        <button style={{border: 0}} onClick={() => this.viewDetails(invoice)} className="label theme-bg text-white f-12">View Details</button>
                         <button style={{border: 0}} onClick={() => this.updateWorkStatus(invoice.id)} className="label theme-bg text-white f-12">
                             {
                                 !invoice.data.workCompleted &&
@@ -177,10 +169,10 @@ class ClientDashboard extends React.Component {
             else{
                 invoices.push(
                     <tr className="unread" key = {invoice.id}>
-                        <td><img className="rounded-circle" style={{width: '40px'}} src={avatar1} alt="activity-user"/></td>
+                        <td><img className="rounded-circle" style={{width: '40px'}} src={avatar2} alt="activity-user"/></td>
                         <td>
-                            <h6 className="mb-1">{invoice.data.company.name}</h6>
-                            {/* <p className="m-0">{invoice.data.note}</p> */}
+                            <h6 className="mb-1">{invoice.data.client.name}</h6>
+                            <p className="m-0">{invoice.data.client.email}</p>
                         </td>
                         <td>
                             <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15"/>{invoice.data.invoiceDate}</h6>
@@ -190,7 +182,7 @@ class ClientDashboard extends React.Component {
                         </td>
 
                         <td>
-                            <h6 className="text-muted">{web3.utils.fromWei(invoice.data.payment.dueAmount)} ETH</h6>
+                            <h6 className="text-muted">{parseFloat(web3.utils.fromWei(invoice.data.payment.dueAmount)).toFixed(2)} ETH due</h6>
                         </td>
                         <td>
                             <h6 className="text-muted">Work Status: &nbsp; 
@@ -205,7 +197,7 @@ class ClientDashboard extends React.Component {
                             </h6>
                         </td>
                         <td>
-                            <a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12">View Details</a>
+                            <button style={{border: 0}} onClick={() => this.viewDetails(invoice)} className="label theme-bg text-white f-12">View Details</button>
                             <button style={{border: 0}} onClick={() => this.updateWorkStatus(invoice.id)} className="label theme-bg text-white f-12">
                             {
                                 !invoice.data.workCompleted &&

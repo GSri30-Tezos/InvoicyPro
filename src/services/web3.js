@@ -164,6 +164,14 @@ export const getAllBillsByCompany = async (companyId) => {
   return invoiceIds;
 };
 
+export const getClientCompany = async (companyId, clientId) => {
+  const clientForCompany = await getClientbyId(companyId, clientId)
+  const clientAddr = clientForCompany['clientAddr']
+  const clientCompanyId = await getCompanyId(clientAddr);
+  const clientCompany = await getCompanyById(clientCompanyId);
+  return clientCompany;
+}
+
 export const getInvoiceDetails = async (invoiceId) => {
   const invoice = await InvoiceManagement_Contract.methods
     .invoices(invoiceId)
@@ -175,7 +183,22 @@ export const getInvoiceDetails = async (invoiceId) => {
   const company = await getCompanyById(invoice.companyId);
   invoice['company'] = company;
 
+  const clientCompany = await getClientCompany(invoice.companyId, invoice.clientId)
+  invoice['client'] = clientCompany;
+
   return invoice;
+};
+export const createInvoice = async (array) => {
+  const accounts = await web3.eth.getAccounts();
+  const account = accounts[0];
+  const result = await InvoiceManagement_Contract.methods
+    .addNewInvoice(...array)
+    .send({
+      from: account,
+    });
+
+  if (result) return true;
+  else return false;
 };
 
 export const getItemsbyInvoice = async (invoiceId) => {

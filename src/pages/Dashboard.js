@@ -3,22 +3,21 @@ import {Row, Col, Card, Table, Button, Collapse} from 'react-bootstrap';
 import {Link} from 'react-router-dom';
 
 import Aux from "../hoc/_Aux";
-import DEMO from "../store/constant";
 
-import avatar1 from '../assets/images/user/avatar-1.jpg';
+
 import avatar2 from '../assets/images/user/avatar-2.jpg';
 
 import {loadWeb3, loadAccount, getCompanyId, getInvoiceDetails,
-        web3, getAllClients, getCompanyById, getAllInvoicesByClient} from "../services/web3";
+        web3, getAllClients, getCompanyById, getAllInvoicesByClient,updateInvoiceWorkCompletedStatus} from "../services/web3";
 
 import NVD3Chart from 'react-nvd3';
 import Dialog from 'react-bootstrap-dialog';
 
 
 const pieChartData = [
-    {key: "100% Advance", y: 50, color: "#239f1c"},
-    {key: "50% Advance 50% Postwork", y: 20, color: "#f4c22b"},
-    {key: "100% Postwork", y: 30, color: "#F45d55"},
+    {key: "50% Advance", y: 40, color: "#1ddec5"},
+    {key: "100% Advance", y: 30, color: "#1dcfda"},
+    {key: "100% Postwork", y: 30, color: "#20c997"},
 ];
 
 function lineChart() {
@@ -27,11 +26,11 @@ function lineChart() {
     for (var i = 0; i < 10; i++) {
         raised.push({
             'x': i,
-            'y': parseInt(100*(Math.sin(i/1.5) * 0.25 + 0.5))
+            'y': parseInt(15*(Math.sin(i/1.5) * 0.25 + 0.5))
         });
         pending.push({
             'x': i,
-            'y': parseInt(15/Math.abs((Math.sin(i/20))+0.5))
+            'y': parseInt(3/Math.abs((Math.sin(i/20))+0.5))
         });
     }
     return [
@@ -105,6 +104,7 @@ class Dashboard extends React.Component {
                 });
     
             })
+            
 
         } catch(e){
             console.log(e);
@@ -128,23 +128,37 @@ class Dashboard extends React.Component {
         return invoices.slice(0,5);
     }
 
+    viewDetails(invoice) {
+        this.props.history.push({
+            pathname: '/view-invoice/',
+            state: { invoice: invoice }
+        })
+    }
+    async updateWorkStatus(invoiceId) {
+        const result = await updateInvoiceWorkCompletedStatus(invoiceId);
+        if(result) {
+            this.dialog.showAlert('Success!');
+            window.location.reload();
+        }
+        else {
+            this.dialog.showAlert('Something went wrong!');
+        }
+    }
     render() {       
         let topPendingInvoices = [];
         let clients = [];
         let blockedClients = [];
-        let totalInvoices = 100;
-        let totalPendingInvoices = 56;
-        let totalClients = 30;
-        
-        let invoices = this.filterTopInvoices();
 
+
+        let invoices = this.filterTopInvoices();
+        // let pendingInvoices = 
         invoices.forEach(invoice => {
             topPendingInvoices.push(
                 <tr className="unread" key = {invoice.id}>
-                    <td><img className="rounded-circle" style={{width: '40px'}} src={avatar1} alt="activity-user"/></td>
+                    <td><img className="rounded-circle" style={{width: '40px'}} src={avatar2} alt="activity-user"/></td>
                     <td>
-                        <h6 className="mb-1">{invoice.data.company.name}</h6>
-                        <p className="m-0">{invoice.data.company.email}</p>
+                        <h6 className="mb-1">{invoice.data.client.name}</h6>
+                        <p className="m-0">{invoice.data.client.email}</p>
                     </td>
                     <td>
                         <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15"/>{invoice.data.invoiceDate}</h6>
@@ -152,12 +166,33 @@ class Dashboard extends React.Component {
                     <td>
                         <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15"/>{invoice.data.dueDate}</h6>
                     </td>
-
                     <td>
-                        <h6 className="text-muted">{web3.utils.fromWei(invoice.data.payment.dueAmount)} ETH due</h6>
+                        <h6 className="text-muted">Work Status: &nbsp; 
+                        {
+                            invoice.data.workCompleted &&
+                            <span className="text-success">Completed</span>
+                        }
+                        {
+                            !invoice.data.workCompleted &&
+                            <span className="text-danger">Not Completed</span>
+                        }
+                        </h6>
                     </td>
                     <td>
-                        <a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12">View Details</a>
+                        <h6 className="text-muted">{parseFloat(web3.utils.fromWei(invoice.data.payment.dueAmount)).toFixed(2)} ETH due</h6>
+                    </td>
+                    <td>
+                        <button style={{border: 0}} onClick={() => this.viewDetails(invoice)} className="label theme-bg2 text-white f-12">View Details</button>
+                        <button style={{border: 0}} onClick={() => this.updateWorkStatus(invoice.id)} className="label theme-bg text-white f-12">
+                            {
+                                !invoice.data.workCompleted &&
+                                "Update Progress"
+                            }
+                            {
+                                invoice.data.workCompleted &&
+                                "Delete Progress"
+                            }                            
+                        </button>
                         <button style={{border: 0}} onClick={() => {this.dialog.showAlert("Reminder sent!")}} className="label theme-bg text-white f-12">Remind</button>
                         <Dialog ref={(component) => { this.dialog = component }} />
                     </td>
@@ -212,7 +247,7 @@ class Dashboard extends React.Component {
                                 <h6 className='mb-4'>Total Invoices Generated</h6>
                                 <div className="row d-flex align-items-center">
                                     <div className="col-9">
-                                        <h3 className="f-w-300 d-flex align-items-center m-b-0"><i className="feather icon-file-text f-30 m-r-5"/>{totalInvoices}</h3>
+                                        <h3 className="f-w-300 d-flex align-items-center m-b-0"><i className="feather icon-file-text f-30 m-r-5"/>{this.state.topInvoices.length}</h3>
                                     </div>
                                 </div>
                             </Card.Body>
@@ -224,7 +259,7 @@ class Dashboard extends React.Component {
                                 <h6 className='mb-4'>Total Pending Invoices</h6>
                                 <div className="row d-flex align-items-center">
                                     <div className="col-9">
-                                        <h3 className="f-w-300 d-flex align-items-center m-b-0"><i className="feather icon-file-text text-c-red f-30 m-r-5"/>{totalPendingInvoices}</h3>
+                                        <h3 className="f-w-300 d-flex align-items-center m-b-0"><i className="feather icon-file-text text-c-red f-30 m-r-5"/>{topPendingInvoices.length}</h3>
                                     </div>
                                 </div>
                             </Card.Body>
@@ -236,7 +271,7 @@ class Dashboard extends React.Component {
                                 <h6 className='mb-4'>Total Clients</h6>
                                 <div className="row d-flex align-items-center">
                                     <div className="col-9">
-                                        <h3 className="f-w-300 d-flex align-items-center m-b-0"><i className="feather icon-users f-30 m-r-5"/> {totalClients}</h3>
+                                        <h3 className="f-w-300 d-flex align-items-center m-b-0"><i className="feather icon-users f-30 m-r-5"/> {this.state.clients.length}</h3>
                                     </div>
                                 </div>
                             </Card.Body>
@@ -247,7 +282,7 @@ class Dashboard extends React.Component {
                     <Col md={6} xl={6}>
                         <Card>
                             <Card.Header>
-                                <Card.Title as="h5">Types of Invoices</Card.Title>
+                                <Card.Title as="h5">Types of Invoices Raised <small>Distribution</small></Card.Title>
                             </Card.Header>
                             <Card.Body className="text-center">
                             <NVD3Chart id="chart" height={300} type="pieChart" datum={pieChartData} x="key" y="y"  />
@@ -354,19 +389,3 @@ class Dashboard extends React.Component {
 }
 
 export default Dashboard;
-
-// For reference
-// const _clients = 
-// [
-//     {
-//         "id":"0",
-//         "data": {
-//             "clientId" : 0,
-//             "clientAddr" : "0x123456789",
-//             "isBlocked" : false,
-//             "discount" : 97,
-//             "numInvoices" : 10,
-//             "name": "Comapny Genius"
-//         }
-//     }
-// ];
