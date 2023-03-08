@@ -1,4 +1,4 @@
-# Invoicy <span style="font-size:medium;">[Invoice Management Systemized]</span>
+# Invoicy Pro
 
 ## Inspiration
 
@@ -82,15 +82,5 @@ We are very interested to take Invoicy to the next level and the following are o
 
 ## Try it out
 
-- [Website](https://invoicy-dapp.netlify.app/)
-- [Demo]()
-
-## Important note
-
-To run the website please login to your metamask or portis account and use the following network:
-
-- Network Name: Mumbai Testnet
-- RPC URL: https://rpc-mumbai.maticvigil.com/
-- Chain ID: 80001
-
-Reload the website after connecting the metamask wallet.
+- [Website](https://invoicypro.netlify.app/)
+- [Demo](https://vimeo.com/805993182)
